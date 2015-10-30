@@ -2,6 +2,7 @@ package soma1431;
 
 import java.awt.Container;
 import java.awt.EventQueue;
+import java.awt.GridBagLayout;
 
 import javax.swing.JFrame;
 import javax.swing.JToolBar;
@@ -22,10 +23,23 @@ import java.awt.event.MouseEvent;
 import java.awt.CardLayout;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import java.awt.GridBagConstraints;
+import java.io.File;
+import java.util.ArrayList;
+
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.RowSpec;
+import com.jgoodies.forms.factories.FormFactory;
 
 public class Soma {
 
-	private JPanel cards;
+	static private JPanel cards;
+	private JPanel cardPreferences;
+	private JTextField textField;
+	private JTextField textField_1;
 
 	
 
@@ -46,17 +60,16 @@ public class Soma {
 		//Create and set up the window.
 		JFrame frame = new JFrame();
 		frame = new JFrame();
-		frame.setBounds(100, 100, 600, 460);
+		frame.setBounds(100, 100, 500, 360);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		//Create and set up the content pane.
 		Soma window = new Soma();
 		window.addCardsToPane(frame.getContentPane());
-		
 		window.createMenu(frame);
 		
 		 //Display the window.
-        frame.pack();
+        //frame.pack();
         frame.setVisible(true);
 		
 	}
@@ -64,26 +77,94 @@ public class Soma {
 	public void addCardsToPane(Container pane) {
          
         //Create the "cards".
-        JPanel card1 = new JPanel();
-        JPanel card2 = new JPanel();
-        fillTableCard(card1);
-        fillPreferencesCard(card2);
+        JPanel cardTable = new JPanel();
+        JPanel cardPreferences = new JPanel();
+        fillTableCard(cardTable);
+        fillPreferencesCard(cardPreferences);
          
         //Create the panel that contains the "cards".
         cards = new JPanel(new CardLayout());
-        cards.add(card1,"table");
-        cards.add(card2,"preferences");
+        cards.add(cardTable,"table");
+        cards.add(cardPreferences,"preferences");
+        
+        
+        
+        
         pane.add(cards, BorderLayout.CENTER);
     }
 	
-	public static void fillTableCard(JPanel card){
-		card.add(new JButton("Button 1"));
-        card.add(new JButton("Button 2"));
-        card.add(new JButton("Button 3"));
+	public static void fillTableCard(JPanel cardTable){
+		cardTable.add(new JButton("Button 1"));
+        cardTable.add(new JButton("Button 2"));
+        cardTable.add(new JButton("Button 3"));
 	}
 	
-	public static void fillPreferencesCard(JPanel card){
-		card.add(new JTextField("TextField", 20));
+	public static void fillPreferencesCard(JPanel cardPreferences){
+		
+		//Initialize FormLayout
+		cardPreferences.setLayout(new FormLayout(new ColumnSpec[] {
+				FormFactory.RELATED_GAP_COLSPEC,
+				FormFactory.DEFAULT_COLSPEC,
+				FormFactory.RELATED_GAP_COLSPEC,
+				ColumnSpec.decode("default:grow"),},
+			new RowSpec[] {
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,
+				FormFactory.RELATED_GAP_ROWSPEC,
+				FormFactory.DEFAULT_ROWSPEC,}));
+        
+        JLabel lblPlaylistName = new JLabel("Playlist Name:");
+        JTextField textPlaylistName = new JTextField();
+        JLabel lblPlaylistFile = new JLabel("Playlist File: ");
+        final JLabel lblChosenFile = new JLabel(" ");
+        JButton btnChooseFile = new JButton("Choose File...");
+        JButton btnSavePlaylist = new JButton("Save");
+        
+        textPlaylistName.setColumns(10);
+        
+        cardPreferences.add(lblPlaylistName, "2, 2, right, default");
+        cardPreferences.add(textPlaylistName, "4, 2, 1, 2, fill, default");
+        cardPreferences.add(lblPlaylistFile, "2, 4");    
+        cardPreferences.add(btnChooseFile, "4, 4");
+        cardPreferences.add(lblChosenFile, "4, 6");
+        cardPreferences.add(btnSavePlaylist, "2, 8");
+        
+        btnChooseFile.addActionListener  
+        (  
+            new ActionListener() {  
+                public void actionPerformed(ActionEvent e) { 
+                	// Open file chooser
+                	JFileChooser fileChooser = new JFileChooser();
+                	FileNameExtensionFilter filterm3u = new FileNameExtensionFilter(
+                	        "PLaylist file (.m3u)", "m3u");
+                	fileChooser.setFileFilter(filterm3u);
+                    int returnValue = fileChooser.showOpenDialog(null);
+                    if (returnValue == JFileChooser.APPROVE_OPTION) {
+                      File selectedFile = fileChooser.getSelectedFile();
+                      System.out.println(selectedFile.getAbsolutePath());
+                      lblChosenFile.setText(selectedFile.getName());
+                    }  
+                }
+            }
+        ); 
+        
+        btnSavePlaylist.addActionListener  
+        (  
+            new ActionListener() {  
+                public void actionPerformed(ActionEvent e) { 
+                	// Activate table card
+                	CardLayout cardLayout = (CardLayout) cards.getLayout();
+                	cardLayout.show(cards, "table");
+                }
+            }
+        ); 
+		
 	}
 	
 
@@ -136,5 +217,10 @@ public class Soma {
 		mnHelp.add(mntmAbout);
 		
 	}
-
 }
+
+class Playlist{
+	private String name;
+	private String file;
+}
+
