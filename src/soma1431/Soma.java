@@ -162,7 +162,9 @@ public class Soma {
         btnSavePlaylist.addActionListener  
         (  
             new ActionListener() {  
-                public void actionPerformed(ActionEvent e) { 
+                public void actionPerformed(ActionEvent e) {
+                	// Message "Data saved"
+                	JOptionPane.showMessageDialog(null, "Playlist saved!", "Add playlist", JOptionPane.INFORMATION_MESSAGE);
                 	// Activate table card
                 	CardLayout cardLayout = (CardLayout) cards.getLayout();
                 	cardLayout.show(cards, "table");
@@ -227,5 +229,17 @@ public class Soma {
 class Playlist{
 	private String name;
 	private String file;
+}
+
+class dataFile{
+	String path;
+	String fileName;
+	public static void createFile()
+	{
+		
+	}
+	
+	
+	
 }
 
