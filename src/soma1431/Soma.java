@@ -31,7 +31,13 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import java.awt.GridBagConstraints;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import com.jgoodies.forms.*;
@@ -44,12 +50,18 @@ import com.jgoodies.forms.layout.RowSpec;
 //import com.jgoodies.forms.layout.RowSpec;
 //import com.jgoodies.forms.factories.FormFactory;
 
+
 public class Soma {
+	
+	public static final String PLAYLIST_FILE = "/home/playlist.soma"; 
 
 	static private JPanel cards;
 	private JPanel cardPreferences;
 	private JTextField textField;
 	private JTextField textField_1;
+	
+	private static PlaylistArray playlists;
+	private static JComboBox<String> comboBox;
 
 	
 
@@ -59,11 +71,16 @@ public class Soma {
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
+				initialize();
 				createAndShowGUI();
 			}
 		});
 	}
 
+	public static void initialize()
+	{
+		playlists = new PlaylistArray();
+	}
 	
 	private static void createAndShowGUI(){
 		
@@ -149,13 +166,11 @@ public class Soma {
 	 */
 	public static void addComboboxAtTable(JTable table) {
 		//Set up the editor for the sport cells.
-		JComboBox comboBox = new JComboBox();
-		comboBox.addItem("Rock");
-		comboBox.addItem("Funk");
-		comboBox.addItem("Reggae");
-		comboBox.addItem("Ska");
-		comboBox.addItem("Balkan");
-		comboBox.addItem("Jazz");
+		
+		comboBox = new JComboBox<String>();
+		for(int i=0; i<playlists.size(); i++){
+			comboBox.addItem(playlists.getPlaylist(i).getName());
+		}
 		
 		
 		//Set up tool tips for the sport cells.
@@ -191,7 +206,7 @@ public class Soma {
 				FormSpecs.DEFAULT_ROWSPEC,}));
         
         JLabel lblPlaylistName = new JLabel("Playlist Name:");
-        JTextField textPlaylistName = new JTextField();
+        final JTextField textPlaylistName = new JTextField();
         JLabel lblPlaylistFile = new JLabel("Playlist File: ");
         final JLabel lblChosenFile = new JLabel(" ");
         JButton btnChooseFile = new JButton("Choose File...");
@@ -229,6 +244,15 @@ public class Soma {
         (  
             new ActionListener() {  
                 public void actionPerformed(ActionEvent e) {
+                	try {
+						Playlist newPlaylist = new Playlist(textPlaylistName.getText(),lblChosenFile.getText());
+						playlists.add(newPlaylist);
+						comboBox.addItem(newPlaylist.getName());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                	
                 	// Message "Data saved"
                 	JOptionPane.showMessageDialog(null, "Playlist saved!", "Add playlist", JOptionPane.INFORMATION_MESSAGE);
                 	// Activate table card
@@ -292,22 +316,7 @@ public class Soma {
 	}
 }
 
-class Playlist{
-	private String name;
-	private String file;
-}
 
-class dataFile{
-	String path;
-	String fileName;
-	public static void createFile()
-	{
-		
-	}
-	
-	
-	
-}
 
 class MyTableModel extends AbstractTableModel {
     private String[] columnNames = {"  ",
@@ -395,5 +404,93 @@ class MyTableModel extends AbstractTableModel {
 
 
 
+}
+
+class Playlist{
+	private String name;
+	private String path;
+	public Playlist(String name){
+		this.name = name;
+	}
+	public Playlist(String name, String path) throws IOException
+	{
+		this.name = name;
+		this.path = path;
+		// writePlaylistToFile();
+	}
+	public String getName(){
+		return name;
+	}
+	
+	public void writePlaylistToFile() throws IOException
+	{
+		SaveFile saveFile  = new SaveFile(Soma.PLAYLIST_FILE, true);
+		saveFile.append("#name: "+ name);
+		saveFile.append("#path: "+ path);
+	}
+	
+}
+
+class PlaylistArray{
+	private ArrayList<Playlist> playlists;
+	
+	public PlaylistArray(){
+		playlists = new ArrayList<Playlist>();
+		playlists.add(new Playlist("Rock"));
+		playlists.add(new Playlist("Funk"));
+		playlists.add(new Playlist("Disco"));
+		playlists.add(new Playlist("Reggae"));
+		playlists.add(new Playlist("Balkan"));
+		
+	}
+	
+	public int size(){
+		return playlists.size();
+	}
+	
+	public Playlist getPlaylist(int k)
+	{
+		return playlists.get(k);
+	}
+	
+	public void add(Playlist newPlaylist)
+	{
+		playlists.add(newPlaylist);
+	}
+	
+	
+}
+
+class SaveFile{
+	File file;
+	BufferedWriter out;
+	public SaveFile(String fileName, boolean forWrite) throws IOException
+	{
+		file = new File(fileName);
+		out = new BufferedWriter(new FileWriter(file));
+	}
+	
+	public void append(String text) throws IOException
+	{
+		out.write(text);
+	}
+	
+	public void close() throws IOException
+	{
+		out.close();
+	}
+	
+}
+
+class dataFile{
+	String path;
+	String fileName;
+	public static void createFile()
+	{
+		
+	}
+	
+	
+	
 }
 
