@@ -40,6 +40,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 import com.jgoodies.forms.*;
@@ -236,8 +237,7 @@ public class Soma {
                     int returnValue = fileChooser.showOpenDialog(null);
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
                       File selectedFile = fileChooser.getSelectedFile();
-                      System.out.println(selectedFile.getAbsolutePath());
-                      lblChosenFile.setText(selectedFile.getName());
+                      lblChosenFile.setText(selectedFile.getAbsolutePath());
                     }  
                 }
             }
@@ -250,6 +250,7 @@ public class Soma {
                 	try {
 						Playlist newPlaylist = new Playlist(textPlaylistName.getText(),lblChosenFile.getText());
 						playlists.add(newPlaylist);
+						newPlaylist.writePlaylistToFile();
 		
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
@@ -261,6 +262,7 @@ public class Soma {
                 	// Activate table card
                 	CardLayout cardLayout = (CardLayout) cards.getLayout();
                 	cardLayout.show(cards, "table");
+                	lblChosenFile.setText(" ");
                 }
             }
         ); 
@@ -280,9 +282,23 @@ public class Soma {
 		JMenu mnAdd = new JMenu("Add");
 		JMenu mnHelp = new JMenu("Help");
 		
+		JMenuItem mntmSaveSchedule = new JMenuItem("Save Schedule");
 		JMenuItem mntmExit = new JMenuItem("Exit");
 		JMenuItem mntmPlaylist = new JMenuItem("Playlist");
 		JMenuItem mntmAbout = new JMenuItem("About");
+		
+		
+		mntmSaveSchedule.addActionListener  
+        (  
+            new ActionListener() {  
+                public void actionPerformed(ActionEvent e) { 
+                	// TODO Check if full array is completed
+                	// TODO Notify if not all array is completed
+                	// TODO Write every completed item to the script
+                    // TODO Throw message that Schedule saved  
+                }  
+            }  
+        );
 		
 		// Add action listener.for the menu button  
         mntmExit.addActionListener  
@@ -311,7 +327,7 @@ public class Soma {
 		menuBar.add(mnAdd);
 		menuBar.add(mnHelp);
 		
-		
+		mnFile.add(mntmSaveSchedule);
 		mnFile.add(mntmExit);
 		mnAdd.add(mntmPlaylist);
 		mnHelp.add(mntmAbout);
@@ -359,6 +375,8 @@ class MyTableModel extends AbstractTableModel {
 
     public final Object[] longValues = {" 23:00 ", "Psychedelic", "Psychedelic", "Psychedelic", 
     		"Psychedelic", "Psychedelic", "Psychedelic", "Psychedelic" };
+    
+    
 
     public int getColumnCount() {
         return columnNames.length;
@@ -425,11 +443,44 @@ class Playlist{
 		return name;
 	}
 	
+	public String getPath()
+	{
+		return path;
+	}
+	
 	public void writePlaylistToFile() throws IOException
 	{
-		SaveFile saveFile  = new SaveFile(Soma.PLAYLIST_FILE, true);
-		saveFile.append("#name: "+ name);
-		saveFile.append("#path: "+ path);
+		RandomAccessFile script = new RandomAccessFile(Soma.SCRIPT_PATH,"rw");
+		String line = null;
+		boolean canWritePlaylists = false;
+		boolean endWriting = false;
+		long toWritePos;
+		while ((line = script.readLine())!= null && (!endWriting))
+		{
+			if (line.contains("#playlists"))
+			{
+				canWritePlaylists = true;
+			}
+			if (canWritePlaylists)
+			{
+				toWritePos = script.getFilePointer();
+				// copy following text to Byte Array
+				int remainingByteCount =  (int) (script.length() - toWritePos);
+				byte[] buf = new byte[remainingByteCount];
+			    script.seek(toWritePos);
+			    script.readFully(buf);
+				// write the needed bytes
+			    script.seek(toWritePos);
+			    String lineToWrite = null;
+			    lineToWrite = this.name + " = playlist(mode='randomize',reload=3600,reload_mode=\"watch\",\""
+			    		+this.path+"\")\n";
+			    script.writeBytes(lineToWrite);
+				// write the Byte Array
+			    script.write(buf);
+				endWriting = true;
+			}
+		}
+		script.close();
 	}
 	
 	public static void readPlaylistsFromFile() throws IOException
@@ -493,39 +544,20 @@ class PlaylistArray{
 		Soma.comboBox.addItem(newPlaylist.getName());
 	}
 	
+	public String getPathByName(String name)
+	{
+		for (int i=0; i<playlists.size(); i++)
+		{
+			if (playlists.get(i).getName() == name)
+			{
+				return playlists.get(i).getPath();
+			}
+		}
+		return " ";
+	}
+	
 	
 }
 
-class SaveFile{
-	File file;
-	BufferedWriter out;
-	public SaveFile(String fileName, boolean forWrite) throws IOException
-	{
-		file = new File(fileName);
-		out = new BufferedWriter(new FileWriter(file));
-	}
-	
-	public void append(String text) throws IOException
-	{
-		out.write(text);
-	}
-	
-	public void close() throws IOException
-	{
-		out.close();
-	}
-	
-}
 
-class dataFile{
-	String path;
-	String fileName;
-	public static void createFile()
-	{
-		
-	}
-	
-	
-	
-}
 
