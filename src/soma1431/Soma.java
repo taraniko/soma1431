@@ -31,11 +31,13 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import java.awt.GridBagConstraints;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,14 +56,15 @@ import com.jgoodies.forms.layout.RowSpec;
 public class Soma {
 	
 	public static final String PLAYLIST_FILE = "/home/playlist.soma"; 
+	public static final String SCRIPT_PATH = "/home/nick/soma.liq";
 
 	static private JPanel cards;
 	private JPanel cardPreferences;
 	private JTextField textField;
 	private JTextField textField_1;
 	
-	private static PlaylistArray playlists;
-	private static JComboBox<String> comboBox;
+	public static PlaylistArray playlists;
+	public static JComboBox<String> comboBox;
 
 	
 
@@ -79,7 +82,15 @@ public class Soma {
 
 	public static void initialize()
 	{
+		comboBox = new JComboBox<String>();
 		playlists = new PlaylistArray();
+		try {
+			Playlist.readPlaylistsFromFile();
+		} catch (IOException e) {
+			// TODO Script file unable to read.
+			System.out.println("Can't read script file");
+			e.printStackTrace();
+		}
 	}
 	
 	private static void createAndShowGUI(){
@@ -165,15 +176,7 @@ public class Soma {
 	 * @param table
 	 */
 	public static void addComboboxAtTable(JTable table) {
-		//Set up the editor for the sport cells.
 		
-		comboBox = new JComboBox<String>();
-		for(int i=0; i<playlists.size(); i++){
-			comboBox.addItem(playlists.getPlaylist(i).getName());
-		}
-		
-		
-		//Set up tool tips for the sport cells.
 		DefaultTableCellRenderer renderer =
 				new DefaultTableCellRenderer();
 		renderer.setToolTipText("Click to change playlist");
@@ -247,7 +250,7 @@ public class Soma {
                 	try {
 						Playlist newPlaylist = new Playlist(textPlaylistName.getText(),lblChosenFile.getText());
 						playlists.add(newPlaylist);
-						comboBox.addItem(newPlaylist.getName());
+		
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -429,19 +432,50 @@ class Playlist{
 		saveFile.append("#path: "+ path);
 	}
 	
+	public static void readPlaylistsFromFile() throws IOException
+	{
+		File script = new File(Soma.SCRIPT_PATH);
+		BufferedReader br = new BufferedReader(new FileReader(script));
+		String line = null;
+		boolean parsingPlaylists = false;
+		boolean finishedPlaylists = false;
+		//Read script line by line
+		while (((line = br.readLine()) != null) && (!finishedPlaylists)) 
+		{
+			if (line.contains("#end_playlists"))
+			{
+				finishedPlaylists = false;
+				parsingPlaylists = false;
+			}
+			if (parsingPlaylists)
+			{
+				//TODO code to parse playlist name and path from script
+				int indexEqual = line.indexOf("=");
+				String playlistName = line.substring(0,indexEqual-1);
+				int indexSlash = line.indexOf("/");
+				String playlistPath = line.substring(indexSlash);
+				int indexParenthesis = playlistPath.indexOf(")");
+				playlistPath = playlistPath.substring(0,indexParenthesis-1);
+				Soma.playlists.add(new Playlist(playlistName,playlistPath));
+				
+			}
+			if (line.contains("#playlists"))
+			{
+				parsingPlaylists = true;
+			}
+			
+		}
+		br.close();
+		
+	}
+	
 }
 
 class PlaylistArray{
 	private ArrayList<Playlist> playlists;
 	
 	public PlaylistArray(){
-		playlists = new ArrayList<Playlist>();
-		playlists.add(new Playlist("Rock"));
-		playlists.add(new Playlist("Funk"));
-		playlists.add(new Playlist("Disco"));
-		playlists.add(new Playlist("Reggae"));
-		playlists.add(new Playlist("Balkan"));
-		
+		playlists = new ArrayList<Playlist>();		
 	}
 	
 	public int size(){
@@ -456,6 +490,7 @@ class PlaylistArray{
 	public void add(Playlist newPlaylist)
 	{
 		playlists.add(newPlaylist);
+		Soma.comboBox.addItem(newPlaylist.getName());
 	}
 	
 	
